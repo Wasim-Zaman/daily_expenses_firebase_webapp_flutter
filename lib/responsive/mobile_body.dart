@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../widgets/transaction_list.dart';
 import '../widgets/app_form.dart';
+import '../widgets/charts.dart';
 
 class MobileBody extends StatelessWidget {
   const MobileBody({super.key});
@@ -26,17 +27,8 @@ class MobileBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // 1. Charts
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Container(
-                height: MediaQuery.of(context).size.height * 0.40,
-                width: MediaQuery.of(context).size.width * 0.40,
-                color: Colors.pink[300],
-                child: Text('Carts'),
-              ),
-            ),
+          Container(
+            child: Charts(),
           ),
 
           // 2. Transactions

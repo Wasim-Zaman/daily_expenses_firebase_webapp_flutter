@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 import './transaction.dart';
 
@@ -93,5 +94,39 @@ class Transactions with ChangeNotifier {
     } catch (error) {
       rethrow;
     }
+  }
+
+  List<Transaction> get _lastWeekTransactions {
+    return _transactions.where((tx) {
+      return tx.date.isAfter(
+        DateTime.now().subtract(const Duration(days: 7)),
+      );
+    }).toList();
+  }
+
+  List<Map<String, Object>> get groupOfTransactionAmount {
+    var lastWeekTransactions = _lastWeekTransactions;
+    return List.generate(7, (index) {
+      final weekDays = DateTime.now().subtract(Duration(days: index));
+      var totalAmount = 0.0;
+
+      for (var tx in lastWeekTransactions) {
+        if (weekDays.day == tx.date.day &&
+            weekDays.month == tx.date.month &&
+            weekDays.year == tx.date.year) {
+          totalAmount += tx.amount;
+        }
+      }
+      return {
+        'day': DateFormat.E().format(weekDays).substring(0, 1),
+        'amount': totalAmount,
+      };
+    }).reversed.toList();
+  }
+
+  double get sumOfAllSpendings {
+    return groupOfTransactionAmount.fold(0.0, (previousValue, element) {
+      return previousValue + (element['amount'] as double);
+    });
   }
 }
