@@ -20,6 +20,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => Transactions(),
       child: GetMaterialApp(
+        darkTheme: ThemeData.dark(),
         theme: ThemeData(primarySwatch: Colors.pink),
         debugShowCheckedModeBanner: false,
         initialRoute: '/',
