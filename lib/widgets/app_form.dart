@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -7,7 +8,13 @@ import '../controllers/transaction.dart';
 import '../controllers/transactions.dart';
 
 class AppForm extends StatefulWidget {
-  const AppForm({super.key});
+  bool editMode;
+  String transactionId;
+  AppForm({
+    super.key,
+    this.editMode = false,
+    this.transactionId = '',
+  });
 
   @override
   State<AppForm> createState() => _AppFormState();
@@ -24,6 +31,35 @@ class _AppFormState extends State<AppForm> {
     date: DateTime(0),
   );
 
+  var initValues = {
+    'id': '',
+    'title': '',
+    'amount': '',
+    'date': 'Choose Date',
+  };
+
+  @override
+  void didChangeDependencies() {
+    if (widget.transactionId == '' && widget.editMode == false) {
+      print('We are in adding mode');
+      return;
+    } else {
+      print('inside else of edit mode');
+
+      _newTransaction = Provider.of<Transactions>(context, listen: false)
+          .getTransactionById(widget.transactionId);
+      initValues = {
+        'id': _newTransaction.id,
+        'title': _newTransaction.title,
+        'amount': _newTransaction.amount.toString(),
+        'date': _newTransaction.date.toString(),
+      };
+      print(initValues);
+      setState(() {});
+    }
+    super.didChangeDependencies();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -36,7 +72,7 @@ class _AppFormState extends State<AppForm> {
     super.dispose();
   }
 
-  Future<void> _saveForm() async {
+  Future<void> _saveForm(bool editMode) async {
     // in order to save the form, we need access to the form widget,
     // for that we will need Global Key to access or interact with the form.
     final isValid = _formKey.currentState!.validate();
@@ -50,27 +86,62 @@ class _AppFormState extends State<AppForm> {
     }
     _formKey.currentState!.save();
 
-    try {
-      print('inside try');
-      await Provider.of<Transactions>(context, listen: false)
-          .addNewTransaction(_newTransaction);
-    } catch (error) {
-      await showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          icon: const Icon(Icons.error),
-          title: const Text('Error'),
-          content: const Text("Something went wrong!"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Ok'),
-            ),
-          ],
-        ),
-      );
+    if (editMode == true) {
+      // update
+      // print('transaction updating !');
+      // print("Id ======= ===== ${widget.transactionId}");
+      try {
+        await Provider.of<Transactions>(context, listen: false)
+            .updateTransactions(widget.transactionId, _newTransaction);
+        print('query ran ===================');
+        Get.snackbar(
+          'Updated!',
+          'Transaction updated successfully',
+          barBlur: 3,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      } catch (error) {
+        await showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            icon: const Icon(Icons.error),
+            title: const Text('Error'),
+            content: const Text("Something went wrong!"),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Ok'),
+              ),
+            ],
+          ),
+        );
+      }
+    } else {
+      print('product added');
+      try {
+        print('inside try');
+        await Provider.of<Transactions>(context, listen: false)
+            .addNewTransaction(_newTransaction);
+      } catch (error) {
+        await showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            icon: const Icon(Icons.error),
+            title: const Text('Error'),
+            content: const Text("Something went wrong!"),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Ok'),
+              ),
+            ],
+          ),
+        );
+      }
     }
 
     // Get.back();
@@ -78,8 +149,6 @@ class _AppFormState extends State<AppForm> {
 
   @override
   Widget build(BuildContext context) {
-    final transactionData =
-        Provider.of<Transactions>(context, listen: false).transactions;
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Form(
@@ -96,7 +165,8 @@ class _AppFormState extends State<AppForm> {
               ),
             ),
             TextFormField(
-              decoration: const InputDecoration(labelText: "Title"),
+              // decoration: const InputDecoration(labelText: "Title"),
+              initialValue: initValues['title'],
               textInputAction: TextInputAction.next,
               autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: (value) {
@@ -118,7 +188,8 @@ class _AppFormState extends State<AppForm> {
               },
             ),
             TextFormField(
-              decoration: const InputDecoration(labelText: "Amount"),
+              // decoration: const InputDecoration(labelText: "Amount"),
+              initialValue: initValues['amount'],
               focusNode: _amountNode,
               autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: (value) {
@@ -150,7 +221,10 @@ class _AppFormState extends State<AppForm> {
               children: [
                 Text(
                   dateValue == null
-                      ? "Choose Date"
+                      ? widget.editMode
+                          ? DateFormat.yMMMd()
+                              .format(DateTime.parse(initValues['date']!))
+                          : "Choose Date"
                       : DateFormat.yMMMd().format(dateValue!),
                 ),
                 TextButton(
@@ -173,7 +247,7 @@ class _AppFormState extends State<AppForm> {
             ),
             ElevatedButton(
               onPressed: () {
-                _saveForm();
+                _saveForm(widget.editMode);
               },
               child: const Text('Add'),
             ),

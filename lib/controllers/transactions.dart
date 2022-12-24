@@ -129,4 +129,57 @@ class Transactions with ChangeNotifier {
       return previousValue + (element['amount'] as double);
     });
   }
+
+  Transaction getTransactionById(String id) {
+    return _transactions.firstWhere((tx) => tx.id == id);
+  }
+
+  Future<void> updateTransactions(String id, Transaction transaction) async {
+    final transactionIndex = _transactions.indexWhere((tx) => tx.id == id);
+    print("Transaction index ====== ${transactionIndex}");
+
+    if (transactionIndex >= 0) {
+      final url =
+          'https://daily-expenses-4adf8-default-rtdb.firebaseio.com/transactions/$id.json';
+      await http.patch(
+        Uri.parse(url),
+        body: json.encode(
+          {
+            "title": transaction.title,
+            "amount": transaction.amount,
+            "date": transaction.date.toIso8601String(),
+          },
+        ),
+      );
+      _transactions[transactionIndex] = transaction;
+      notifyListeners();
+    } else {
+      // print('Item not found');
+    }
+  }
+
+  Future<void> deleteTransaction(String id) async {
+    final url =
+        'https://daily-expenses-4adf8-default-rtdb.firebaseio.com/transactions/$id.json';
+    final transactionIndex = _transactions.indexWhere((tx) => tx.id == id);
+    Transaction? deletedTransaction = _transactions.elementAt(transactionIndex);
+
+    _transactions.removeAt(transactionIndex);
+    notifyListeners();
+
+    try {
+      final response = await http.delete(Uri.parse(url));
+      print("The response status code is: '${response.statusCode}'");
+      if (response.statusCode >= 400) {
+        _transactions.insert(transactionIndex, deletedTransaction);
+        notifyListeners();
+        throw Exception('Product could not be deleted!');
+      }
+      print('product deleted successfully');
+      deletedTransaction = null;
+    } catch (error) {
+      print('internet problem');
+      rethrow;
+    }
+  }
 }

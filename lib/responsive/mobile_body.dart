@@ -15,24 +15,21 @@ class MobileBody extends StatelessWidget {
           showModalBottomSheet(
             context: context,
             builder: (ctx) {
-              return const AppForm();
+              return AppForm();
             },
           );
         },
         child: const Icon(Icons.add),
       ),
-      appBar: AppBar(),
-      backgroundColor: Colors.pink[200],
+      // backgroundColor: Colors.pink[200],
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
+        children: const [
           // 1. Charts
-          Container(
-            child: Charts(),
-          ),
+          Charts(),
 
           // 2. Transactions
-          const Expanded(
+          Expanded(
             child: TransactionList(),
           )
         ],
